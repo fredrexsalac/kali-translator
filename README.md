@@ -59,3 +59,27 @@
    ```bash
    git clone https://github.com/yourusername/kali-translator.git
    cd kali-translator
+---------------------------------------------------------------------------------------------------------------------
+## 🌐 Live Web App
+
+The **Kali Translator** is deployed and available as a real-time web application.
+
+🔗 **Live URL:** [https://kali-translator.onrender.com](https://kali-translator.onrender.com)  
+*(Replace this with your actual deployed URL)*
+
+### Features Available Online
+
+- 🔐 Secure, privacy-focused translation interface  
+- 🎙️ Voice input via microphone (speech-to-text)  
+- 🔊 Text-to-speech output  
+- 🌍 Language detection and swapping  
+- 📱 Mobile-friendly, responsive UI  
+- 🛡️ No tracking or third-party cookies  
+
+### Deployment Details
+
+- **Platform:** [Render](https://render.com/)  
+- **Web Server:** Gunicorn (WSGI)  
+- **Framework:** Django (Python)  
+- **Database:** SQLite (default, can be upgraded)  
+- **Offline Speech Recognition:** Vosk (model downloaded on server during build/start)  
