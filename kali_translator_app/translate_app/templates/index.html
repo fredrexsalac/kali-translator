@@ -1,0 +1,250 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kali Translator</title>
+  <link rel="icon" type="image/png" href="{% static 'icons/kali_icon.png' %}" />
+  <link rel="stylesheet" href="{% static 'styles.css' %}">
+
+  <style>
+    /* Intro overlay styles */
+    #intro-overlay {
+      position: fixed;
+      inset: 0;
+      background: #111;
+      color: #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: transform 0.8s ease, opacity 0.8s ease;
+      will-change: transform, opacity;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 1rem;
+      text-align: center;
+    }
+    #intro-overlay.slide-out {
+      transform: translateX(100vw);
+      opacity: 0;
+    }
+    .intro-content {
+      max-width: 400px;
+    }
+    .intro-content h2 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .intro-content p {
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+      line-height: 1.4;
+    }
+    .intro-content a {
+      color: #1a73e8;
+      text-decoration: underline;
+    }
+    #agree-btn {
+      background: #1a73e8;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      font-size: 1.1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #agree-btn:hover,
+    #agree-btn:focus {
+      background: #155ab6;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Intro Overlay -->
+  <div id="intro-overlay" role="dialog" aria-modal="true" aria-labelledby="intro-title" tabindex="-1">
+    <div class="intro-content">
+      <h2 id="intro-title">Welcome to Kali Translator</h2>
+      <p>By using this service, you agree to our <a href="/terms" target="_blank" rel="noopener">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+      <button id="agree-btn" aria-label="I Agree to Terms">I Agree</button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="header" style="display:none;">
+    <img src="{% static 'logo/kali-logo.png' %}" alt="Kali Logo" class="logo" />
+    <h1>Kali Translator</h1>
+  </header>
+
+  <!-- Translation Form -->
+  <form method="post" enctype="multipart/form-data" style="display:none;">
+    {% csrf_token %}
+
+    <!-- Language Selectors -->
+    <div class="controls">
+      <select name="source_lang" aria-label="Source Language" required>
+        {% for code, name in languages.items %}
+          <option value="{{ code }}" {% if code == source_lang %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="button" class="swap-btn" title="Swap Languages" onclick="swapLanguages()" aria-label="Swap Languages">⇄</button>
+
+      <select name="target_lang" aria-label="Target Language" required>
+        {% for code, name in languages.items %}
+          <option value="{{ code }}" {% if code == target_lang %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Text Areas -->
+    <div class="textareas">
+      <!-- Source Text -->
+      <div class="textarea-wrapper">
+        <textarea 
+          name="source_text" 
+          placeholder="Type text here..." 
+          aria-label="Source Text"
+          style="cursor: url('{% static 'cursors/text.cur' %}'), text;"
+        >{{ source_text }}</textarea>
+        <button type="button" class="speech-btn" title="Speak Text" aria-label="Speak Source Text">🔊</button>
+        <button type="button" id="record-btn" title="Record Speech" aria-label="Record Speech">🎙️</button>
+      </div>
+
+      <!-- Translated Text -->
+      <div class="textarea-wrapper">
+        <textarea 
+          name="translated_text" 
+          placeholder="Translation appears here..." 
+          readonly 
+          aria-label="Translated Text"
+          style="cursor: url('{% static 'cursors/text.cur' %}'), text;"
+        >{{ translated_text }}</textarea>
+        <button type="button" class="speech-btn" title="Speak Translation" aria-label="Speak Translated Text">🔊</button>
+      </div>
+    </div>
+
+    <!-- Hidden Audio Input -->
+    <input type="file" name="audio_file" id="audio_file_input" accept="audio/wav" hidden />
+
+    <!-- Submit Button -->
+    <button type="submit" class="translate-btn" aria-label="Translate Button">Translate</button>
+  </form>
+
+  <!-- Footer -->
+  <footer style="display:none;">
+    An Alternative Translator — Inspired by a Computer Science Student
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    // Intro overlay logic
+    document.addEventListener('DOMContentLoaded', () => {
+      const introOverlay = document.getElementById('intro-overlay');
+      const agreeBtn = document.getElementById('agree-btn');
+
+      // Elements to reveal after intro
+      const header = document.querySelector('header.header');
+      const form = document.querySelector('form');
+      const footer = document.querySelector('footer');
+
+      // Check if user already agreed
+      if (localStorage.getItem('kaliTranslatorAgreed') === 'true') {
+        introOverlay.style.display = 'none';
+        header.style.display = '';
+        form.style.display = '';
+        footer.style.display = '';
+      } else {
+        introOverlay.style.display = 'flex';
+        agreeBtn.focus();
+      }
+
+      agreeBtn.addEventListener('click', () => {
+        introOverlay.classList.add('slide-out');
+        localStorage.setItem('kaliTranslatorAgreed', 'true');
+
+        introOverlay.addEventListener('transitionend', () => {
+          introOverlay.style.display = 'none';
+          header.style.display = '';
+          form.style.display = '';
+          footer.style.display = '';
+        }, { once: true });
+      });
+    });
+
+    // Swap Language Function
+    function swapLanguages() {
+      const source = document.querySelector('select[name="source_lang"]');
+      const target = document.querySelector('select[name="target_lang"]');
+      const sourceText = document.querySelector('textarea[name="source_text"]');
+      const targetText = document.querySelector('textarea[name="translated_text"]');
+
+      [source.value, target.value] = [target.value, source.value];
+      [sourceText.value, targetText.value] = [targetText.value, sourceText.value];
+    }
+
+    // Speech Synthesis
+    document.querySelectorAll('.speech-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const textarea = btn.closest('.textarea-wrapper').querySelector('textarea');
+        if (!textarea.value.trim()) return alert("No text to speak!");
+        const utterance = new SpeechSynthesisUtterance(textarea.value);
+        speechSynthesis.speak(utterance);
+      });
+    });
+
+    // Audio Recording
+    const recordBtn = document.getElementById('record-btn');
+    const audioInput = document.getElementById('audio_file_input');
+    let mediaRecorder;
+    let audioChunks = [];
+
+    recordBtn.addEventListener('click', () => {
+      recordBtn.textContent === '🎙️' ? startRecording() : stopRecording();
+    });
+
+    function startRecording() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        return alert('Your browser does not support audio recording.');
+      }
+
+      navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+        recordBtn.textContent = '⏹️';
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+          const file = new File([audioBlob], "recorded.wav", { type: 'audio/wav' });
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(file);
+          audioInput.files = dataTransfer.files;
+        };
+      }).catch(err => alert('Microphone error: ' + err.message));
+    }
+
+    function stopRecording() {
+      mediaRecorder.stop();
+      recordBtn.textContent = '🎙️';
+    }
+
+    // Sparkle Click Effect
+    document.addEventListener('click', function (e) {
+      for (let i = 0; i < 5; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        document.body.appendChild(sparkle);
+
+        sparkle.style.left = `${e.clientX + (Math.random() - 0.5) * 30}px`;
+        sparkle.style.top = `${e.clientY + (Math.random() - 0.5) * 30}px`;
+
+        setTimeout(() => sparkle.remove(), 600);
+      }
+    });
+  </script>
+</body>
+</html>
