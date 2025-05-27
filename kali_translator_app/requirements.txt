@@ -177,7 +177,6 @@ stack-data==0.6.3
 stanza==1.1.1
 sympy==1.14.0
 tensorboard==2.18.0
-tensorboard-data-server>=0.6.0,<0.7.0
 tensorboard-plugin-wit==1.8.1
 tensorflow==2.18.0
 tensorflow-addons==0.23.0
