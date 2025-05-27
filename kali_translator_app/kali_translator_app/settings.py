@@ -1,16 +1,22 @@
 import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Define the absolute path to the Vosk model directory
 VOSK_MODEL_PATH = os.path.join(BASE_DIR, "vosk-model-small-en-us-0.15")
 
-# Quick-start development settings - unsuitable for production
-SECRET_KEY = 'django-insecure-!j7$q6phkcjcu!3jzbr@5uuqrd(ul#vh(t2zk9efl*_3)0f@0w'
-DEBUG = False
-ALLOWED_HOSTS = []
+# Get secret key from environment, fallback for development only
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-fallback')
+
+# DEBUG from env, default False
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
+
+# ALLOWED_HOSTS from env, split by commas, default empty list
+allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '')
+if allowed_hosts_env:
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',')]
+else:
+    ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -37,7 +43,7 @@ ROOT_URLCONF = 'kali_translator_app.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # You can optionally add template dirs here
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
