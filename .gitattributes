@@ -1,0 +1,1 @@
+kali_translator_app/vosk-model-small-en-us-0.15/** filter=lfs diff=lfs merge=lfs -text
